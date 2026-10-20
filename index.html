@@ -1,18 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#a3004e">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Numbsters">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>Numbsters (p5.js)</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.1/p5.min.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#controls">Skip to game controls</a>
 
-    <title>Sketch</title>
+  <header>
+    <h1>Numbsters</h1>
+    <button type="button" id="new-game" class="secondary new-game">New game</button>
+    <p class="tagline">A solitaire card game. Arrange the hungry Numbsters so one is always eating, and don't let the Mouth reach the top of the stack. Each turn, draw a card, then move or swap one card if you want, then have one Numbster eat another.</p>
+  </header>
 
-    <link rel="stylesheet" type="text/css" href="style.css">
+  <main>
+    <!-- Live status: everything important is announced here for screen readers -->
+    <section class="panel status-panel" aria-labelledby="status-heading">
+      <h2 id="status-heading" class="visually-hidden">Game status</h2>
+      <p id="turn-info" class="turn-info"></p>
+      <p id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
+    </section>
 
-    <script src="libraries/p5.min.js"></script>
-    <script src="libraries/p5.sound.min.js"></script>
-  </head>
+    <!-- Visual table. Everything shown here is also available as buttons and text below. -->
+    <section class="panel table-panel" aria-labelledby="table-heading">
+      <h2 id="table-heading">The table</h2>
+      <p class="hint table-hint">The stack reads from the bottom (position 1) to the top (the last card). Hover over, tap, or tab to a card to see its power. You can also play with the stack buttons below.</p>
+      <div id="canvas-holder"></div>
+    </section>
 
-  <body>
-    <script src="sketch.js"></script>
-  </body>
+    <section id="controls" class="panel" aria-labelledby="controls-heading" tabindex="-1">
+      <h2 id="controls-heading">Your move</h2>
+
+      <h3 id="stack-heading">Stack, bottom to top</h3>
+      <p id="stack-help" class="hint"></p>
+      <ol id="stack-buttons" class="stack-buttons" aria-labelledby="stack-heading" aria-describedby="stack-help"></ol>
+
+      <div id="action-buttons" class="action-buttons" role="group" aria-label="Actions"></div>
+    </section>
+
+    <section class="panel options-panel" aria-label="Options">
+      <fieldset class="card-style">
+        <legend>Card style</legend>
+        <label><input type="radio" name="card-style" value="simple" checked> Simple</label>
+        <label><input type="radio" name="card-style" value="art"> Original art</label>
+        <p id="art-note" class="hint" hidden>The original art images could not be loaded. Add the <code>cards</code> folder to use them.</p>
+      </fieldset>
+    </section>
+
+    <section class="panel two-col" aria-labelledby="card-heading">
+      <div>
+        <h2 id="card-heading">Card details</h2>
+        <div id="card-detail" class="card-detail"><p>Select or point at a card to see its eating rule.</p></div>
+      </div>
+      <div>
+        <h2 id="log-heading">Game log</h2>
+        <ol id="log" class="log" aria-labelledby="log-heading"></ol>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="checklist-heading">
+      <h2 id="checklist-heading">Numbster checklist</h2>
+      <p class="hint">When you win, the Numbster on top of the Mouth is checked off automatically. You can also tick boxes yourself. Can you win with all 17? (Saved in this browser only.)</p>
+      <ul id="checklist" class="checklist"></ul>
+      <button type="button" id="reset-checklist" class="secondary">Clear checklist</button>
+    </section>
+
+    <section class="panel rules" aria-labelledby="rules-heading">
+      <h2 id="rules-heading">How to play</h2>
+      <details>
+        <summary>Show the rules</summary>
+        <h3>Setup</h3>
+        <p>The 17 Numbster cards are shuffled into a deck. Six are drawn and shuffled with the Mouth (the 8) to form a stack of 7 cards. The top card of the stack is on the right.</p>
+        <h3>Each turn</h3>
+        <ol>
+          <li><strong>Draw:</strong> put 1 card from the deck on top of the stack (skip if the deck is empty).</li>
+          <li><strong>Move (optional):</strong> move 1 card to another position, or swap 2 cards. The Mouth can be moved too.</li>
+          <li><strong>Eat:</strong> one Numbster must eat another. If nothing can be eaten, you lose.</li>
+        </ol>
+        <h3>Basic eating</h3>
+        <p>If two <em>sequential</em> Numbsters sit on either side of the Mouth, the smaller one eats the bigger one, and the bigger one is discarded. Sequential means the values differ by 1. Seven and Nine also count as sequential, because Eight is the Mouth, not a Numbster.</p>
+        <h3>Special eating</h3>
+        <p>Instead of the basic rule, you may use the special rule printed on the <strong>top</strong> card of the stack. The Mouth must still be directly between the eater and the eaten Numbster, but the card's rule replaces the "sequential" requirement. After eating, the card whose rule you used moves to the bottom of the stack.</p>
+        <h3>Winning and losing</h3>
+        <p>You <strong>win</strong> if the stack is just the Mouth with one Numbster on top of it. You <strong>lose</strong> if nothing can be eaten, or if the Mouth is on top of the stack at the end of a turn.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer>
+    <p>Numbsters game design by Milan Zivkovic, art by Luke Flowers, published by Button Shy Games (buttonshygames.com). This p5.js version is a classroom recreation. The simple cards are an original design drawn in code; the optional art cards use images of the published cards.</p>
+  </footer>
+
+  <!-- Card power pop-up (screen readers get the same text through each button's description) -->
+  <div id="power-tip" class="power-tip" aria-hidden="true" hidden></div>
+
+  <script src="simplecards.js"></script>
+  <script src="sketch.js"></script>
+</body>
 </html>

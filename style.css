@@ -1,8 +1,253 @@
-html, body {
-  margin: 0;
-  padding: 0;
+/* Numbsters — colors chosen for WCAG 2.2 AA contrast.
+   Text #2b0a1e on #fff5fa ≈ 17:1; white on #a3004e ≈ 7.6:1; #00585f on white ≈ 7.5:1. */
+:root {
+  --bg: #fff5fa;
+  --panel: #ffffff;
+  --panel-edge: #e7a8c6;
+  --ink: #2b0a1e;
+  --ink-soft: #5a3049;
+  --primary: #a3004e;
+  --primary-dark: #7a003a;
+  --teal: #00585f;
+  --focus: #1a1a1a;
+  --win: #1d5e20;
+  --lose: #9b1111;
 }
 
-canvas {
-  display: block;
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+header, main, footer { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+header h1 { margin: 16px 0 0; font-size: 2.25rem; color: var(--primary); letter-spacing: .02em; }
+.tagline { margin: 4px 0 12px; color: var(--ink-soft); }
+h2 { font-size: 1.25rem; margin: 0 0 8px; }
+h3 { font-size: 1.05rem; margin: 12px 0 6px; }
+
+.panel {
+  background: var(--panel);
+  border: 2px solid var(--panel-edge);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 0 0 16px;
+}
+.hint { margin: 0 0 8px; color: var(--ink-soft); font-size: .95rem; }
+
+.skip-link { position: absolute; left: -9999px; top: 0; }
+.skip-link:focus { left: 16px; top: 8px; background: var(--panel); padding: 8px 12px; z-index: 10; }
+
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0; padding: 0; margin: -1px;
+}
+
+.turn-info { margin: 0; color: var(--ink-soft); }
+.status { margin: 4px 0 0; font-size: 1.1rem; min-height: 1.5em; }
+.status.win { color: var(--win); font-weight: 700; }
+.status.lose { color: var(--lose); font-weight: 700; }
+
+#canvas-holder { width: 100%; }
+#canvas-holder canvas { display: block; max-width: 100%; border-radius: 8px; }
+
+/* Buttons */
+button {
+  font: inherit; font-weight: 600; cursor: pointer;
+  min-height: 44px; min-width: 44px; padding: 8px 16px;
+  border-radius: 8px; border: 2px solid var(--primary);
+  background: var(--primary); color: #fff;
+}
+button:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+button.secondary { background: #fff; color: var(--primary); }
+button.secondary:hover { background: #fde4ef; }
+button:focus-visible, summary:focus-visible, a:focus-visible, #controls:focus-visible {
+  outline: 3px solid var(--focus); outline-offset: 3px; box-shadow: 0 0 0 6px #fff;
+}
+
+.action-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+.stack-buttons { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0; }
+.stack-buttons button {
+  background: #fff; color: var(--ink); border-color: var(--teal);
+  min-width: 56px; font-size: 1.15rem; display: flex; flex-direction: column; align-items: center; line-height: 1.1;
+}
+.stack-buttons button small { font-size: .7rem; font-weight: 600; color: var(--ink-soft); }
+.stack-buttons button.mouth { border-style: double; border-width: 4px; }
+.stack-buttons button[aria-pressed="true"] {
+  background: var(--teal); color: #fff; outline: 3px solid var(--teal); outline-offset: 2px;
+}
+.stack-buttons button[aria-pressed="true"] small { color: #fff; }
+.stack-buttons button.target { border-style: dashed; border-width: 3px; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 760px) { .two-col { grid-template-columns: 1fr; } }
+
+.card-detail { display: flex; gap: 12px; align-items: flex-start; }
+.card-detail img { width: 155px; height: auto; border-radius: 6px; flex: none; }
+.card-detail p { margin: 0 0 6px; }
+
+.log { max-height: 220px; overflow-y: auto; margin: 0; padding-left: 1.6em; font-size: .95rem; }
+
+.checklist { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0 0 12px; }
+.checklist label {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  min-width: 44px; padding: 4px 4px 2px; border: 2px solid var(--panel-edge); border-radius: 8px; cursor: pointer;
+}
+.checklist input { width: 20px; height: 20px; margin: 0; accent-color: var(--win); cursor: pointer; }
+.checklist input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.checklist .num { font-weight: 700; font-size: 1rem; line-height: 1.2; }
+.checklist li.won label { border-color: var(--win); background: #e8f3e8; }
+.checklist li.won .num { color: var(--win); }
+
+details summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+footer { color: var(--ink-soft); font-size: .9rem; padding-bottom: 24px; }
+
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+
+/* ---------- Card power pop-up ---------- */
+.power-tip {
+  position: absolute; z-index: 50; max-width: min(280px, calc(100vw - 16px));
+  background: #2b0a1e; color: #fff; border-radius: 10px; padding: 10px 12px;
+  font-size: .95rem; line-height: 1.35; box-shadow: 0 6px 18px rgba(43, 10, 30, .35);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.power-tip[hidden] { display: none; }
+.power-tip strong { font-size: 1rem; }
+.power-tip em { font-style: normal; font-size: .85rem; color: #ffd6ea; } /* ≈ 12:1 on #2b0a1e */
+.power-tip::after {
+  content: ""; position: absolute; left: var(--arrow-x, 50%); bottom: -8px; transform: translateX(-50%);
+  border: 8px solid transparent; border-bottom: 0; border-top-color: #2b0a1e;
+}
+.power-tip.below::after { bottom: auto; top: -8px; border: 8px solid transparent; border-top: 0; border-bottom-color: #2b0a1e; }
+
+/* ---------- Phones ---------- */
+body { -webkit-text-size-adjust: 100%; padding-bottom: env(safe-area-inset-bottom); }
+#canvas-holder canvas { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+}
+
+/* ---------- Card style switch ---------- */
+.card-style { border: 2px solid var(--panel-edge); border-radius: 10px; padding: 6px 12px 8px; margin: 0 0 10px; display: flex; flex-wrap: wrap; gap: 4px 20px; align-items: center; }
+.card-style legend { font-weight: 700; padding: 0 6px; }
+.card-style label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; font-weight: 600; }
+.card-style input { width: 22px; height: 22px; accent-color: var(--primary); margin: 0; }
+.card-style input:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.card-style .hint { flex-basis: 100%; margin: 0; }
+
+/* ---------- Header: title + New game ---------- */
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 0 12px; }
+header h1 { flex: 1 1 auto; }
+header .new-game { margin-top: 12px; }
+header .tagline { flex-basis: 100%; }
+.options-panel { padding-top: 6px; padding-bottom: 6px; }
+.options-panel .card-style { margin: 0; border: 0; padding: 0; }
+.options-panel .card-style legend { float: left; padding: 0 12px 0 0; line-height: 44px; }
+
+/* ==========================================================
+   Compact "one screen" game layout for phones and tablets.
+   The game area (status, table, move buttons) is kept tight
+   so it fits in the viewport; the canvas takes the height that
+   is left (see fitCanvas in sketch.js). Extras sit below.
+   ========================================================== */
+@media (max-width: 1024px), (max-height: 820px) {
+  header h1 { font-size: 1.6rem; margin-top: 8px; }
+  .tagline { font-size: .9rem; margin: 0 0 8px; }
+  .panel { padding: 8px 12px; margin-bottom: 10px; }
+  .status { font-size: 1rem; margin-top: 2px; }
+  .table-hint { font-size: .85rem; margin-bottom: 4px; }
+  #controls h2 { font-size: 1.1rem; margin-bottom: 4px; }
+  #controls h3 { margin: 4px 0; font-size: .95rem; }
+  .action-buttons { margin-top: 8px; gap: 6px; }
+}
+
+@media (max-width: 640px) {
+  header, main, footer { padding-left: max(8px, env(safe-area-inset-left)); padding-right: max(8px, env(safe-area-inset-right)); }
+
+  /* header: one line; the full description lives in "How to play" */
+  header { display: flex; align-items: baseline; gap: 8px; }
+  header h1 { font-size: 1.35rem; margin: 6px 0 4px; }
+  .tagline { display: none; }
+
+  .panel { padding: 6px 8px; margin-bottom: 8px; border-radius: 10px; border-width: 1.5px; }
+
+  /* status: two short lines */
+  .status-panel { padding: 4px 10px; }
+  .turn-info { font-size: .85rem; }
+  .status { font-size: .95rem; line-height: 1.3; min-height: 2.6em; }
+
+  header .new-game { margin-top: 4px; min-height: 40px; padding: 4px 12px; font-size: .9rem; }
+
+  /* table: the heading and long hint are for screen readers */
+  .table-panel { padding: 4px 4px 2px; }
+  #table-heading, .table-hint {
+    position: absolute !important; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap; border: 0; padding: 0; margin: -1px;
+  }
+
+  /* controls: one compact row of stack buttons, then the actions */
+  #controls { padding: 6px 8px 8px; }
+  #controls h2, #stack-heading, #stack-help {
+    position: absolute !important; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap; border: 0; padding: 0; margin: -1px;
+  }
+  .stack-buttons { flex-wrap: nowrap; gap: 3px; }
+  .stack-buttons li { flex: 1 1 0; min-width: 0; }
+  .stack-buttons button { width: 100%; min-width: 0; padding: 4px 0; font-size: 1rem; min-height: 44px; }
+  .stack-buttons button small { display: none; } /* position is drawn on the table; buttons keep full aria-labels */
+  .stack-buttons button.mouth { border-width: 3px; }
+
+  /* actions: two columns of compact buttons; the first (main) action spans both */
+  .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+  .action-buttons button { padding: 6px 10px; font-size: .9rem; line-height: 1.2; min-height: 44px; text-align: center; }
+  .action-buttons button:first-child { grid-column: 1 / -1; }
+
+  .card-detail { flex-direction: row; }
+  .card-detail img { width: 96px; }
+  .log { max-height: 160px; }
+}
+
+/* very short screens (landscape phones): drop the remaining extra lines */
+@media (max-height: 500px) {
+  .tagline, .table-hint { display: none; }
+  header h1 { font-size: 1.2rem; margin: 4px 0; }
+  .status { min-height: 0; }
+}
+
+/* ---------- Landscape tablets / phones / short laptops: table beside the controls ---------- */
+@media (orientation: landscape) and (max-height: 820px) and (min-width: 700px) {
+  main { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr); grid-template-rows: auto 1fr; column-gap: 10px; align-items: start; }
+  main > section { grid-column: 1 / -1; }
+  main > .table-panel { grid-column: 1; grid-row: 1 / span 2; }
+  main > .status-panel { grid-column: 2; grid-row: 1; }
+  main > #controls { grid-column: 2; grid-row: 2; }
+  .tagline { display: none; }
+  header h1 { margin: 4px 0; }
+  header .new-game { margin-top: 4px; }
+  #table-heading, .table-hint { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: -1px; }
+  .stack-buttons button { min-width: 44px; padding: 4px 6px; font-size: 1rem; }
+  .action-buttons button { padding: 6px 10px; font-size: .9rem; }
+}
+
+/* Landscape phones: compact the side column the same way as portrait phones */
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 700px) {
+  header .new-game { min-height: 40px; padding: 4px 12px; font-size: .9rem; }
+  .panel { padding: 6px 8px; margin-bottom: 8px; }
+  .turn-info { font-size: .8rem; }
+  .status { font-size: .9rem; line-height: 1.3; }
+  #controls h2, #stack-heading, #stack-help {
+    position: absolute !important; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap; border: 0; padding: 0; margin: -1px;
+  }
+  .stack-buttons { flex-wrap: nowrap; gap: 3px; }
+  .stack-buttons li { flex: 1 1 0; min-width: 0; }
+  .stack-buttons button { width: 100%; min-width: 0; padding: 4px 0; }
+  .stack-buttons button small { display: none; }
+  .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+  .action-buttons button { min-height: 44px; padding: 4px 8px; font-size: .85rem; line-height: 1.2; }
+  .action-buttons button:first-child { grid-column: 1 / -1; }
 }
