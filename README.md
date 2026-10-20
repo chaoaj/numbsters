@@ -2,6 +2,7 @@
 
 A p5.js recreation of the Button Shy solitaire game *Numbsters*
 (design: Milan Zivkovic, art: Luke Flowers).
+https://chaoaj.github.io/numbsters/
 
 ## Files
 - `index.html` – page structure, accessible controls, rules
